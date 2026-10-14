@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rampura Election Results</title>
+    <style>
+      :root {
+        --bg-1: #0f172a;
+        --bg-2: #111827;
+        --panel: rgba(15, 23, 42, 0.72);
+        --line: rgba(148, 163, 184, 0.18);
+        --text: #e2e8f0;
+        --muted: #a5b4cf;
+        --primary: #4f46e5;
+        --emerald: #10b981;
+        --amber: #fbbf24;
+        --cyan: #22d3ee;
+        --danger: #ef4444;
+        --shadow: 0 20px 40px rgba(15, 23, 42, 0.38);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: linear-gradient(140deg, #020817 0%, #0f172a 42%, #111827 100%);
+        color: var(--text);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        min-height: 100vh;
+        padding: 28px 18px;
+        background-image:
+          linear-gradient(rgba(2, 8, 23, 0.56), rgba(15, 23, 42, 0.68)),
+          url('https://images.unsplash.com/photo-1509099836639-18ba1795216d?auto=format&fit=crop&w=1600&q=80');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+      }
+
+      @keyframes fadePage {
+        0% { opacity: 0; transform: scale(0.985); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+
+      @keyframes riseIn {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes pulseGlow {
+        0%, 100% { box-shadow: 0 0 0 rgba(16, 185, 129, 0.12); }
+        50% { box-shadow: 0 0 18px rgba(16, 185, 129, 0.18); }
+      }
+
+      @keyframes shimmerSoft {
+        0% { transform: translateX(-120%); }
+        100% { transform: translateX(120%); }
+      }
+
+      .dashboard-shell {
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+
+      .site-credit {
+        margin: 20px auto 0;
+        color: rgba(226, 232, 240, 0.78);
+        font-size: 0.78rem;
+        text-align: center;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        width: fit-content;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(79, 70, 229, 0.18);
+        border: 1px solid rgba(79, 70, 229, 0.32);
+        font-size: 0.73rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #c7d2fe;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: clamp(2rem, 2vw + 1rem, 3.2rem);
+        letter-spacing: -0.05em;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 10px 14px;
+        background: rgba(16, 185, 129, 0.12);
+        border: 1px solid rgba(16, 185, 129, 0.28);
+        color: #bbf7d0;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .status-pill.offline {
+        background: rgba(251, 191, 36, 0.14);
+        border-color: rgba(251, 191, 36, 0.28);
+        color: #fef3c7;
+      }
+
+      .header-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .lang-toggle {
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: rgba(15, 23, 42, 0.4);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 9px 12px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .telegram-link {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(59, 130, 246, 0.15));
+        border-color: rgba(96, 165, 250, 0.35);
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 22px;
+      }
+
+      .metric-card,
+      .panel-card {
+        position: relative;
+        background: rgba(15, 23, 42, 0.72);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        animation: riseIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      .metric-card {
+        padding: 22px 20px;
+      }
+
+      .metric-label {
+        display: block;
+        color: var(--muted);
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+
+      .metric-value {
+        font-size: clamp(2.1rem, 2.2vw + 1rem, 3rem);
+        font-weight: 800;
+        letter-spacing: -0.06em;
+      }
+
+      .metric-subtitle {
+        margin-top: 8px;
+        color: #cbd5e1;
+        font-size: 0.82rem;
+      }
+
+      .panel-card {
+        padding: 22px 20px;
+      }
+
+      .panel-title {
+        margin: 0 0 18px;
+        font-size: 1.2rem;
+        letter-spacing: -0.04em;
+      }
+
+      .result-list {
+        display: grid;
+        gap: 18px;
+      }
+
+      .result-row {
+        position: relative;
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        background: rgba(15, 23, 42, 0.48);
+        padding: 18px 18px 14px;
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+
+      .result-row.leading {
+        border-color: rgba(251, 191, 36, 0.7);
+        box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.25), 0 18px 26px rgba(251, 191, 36, 0.1);
+      }
+
+      .result-row-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .candidate-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .candidate-box {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: white;
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.92), rgba(16, 185, 129, 0.82));
+      }
+
+      .candidate-name {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .candidate-name strong {
+        font-size: 1rem;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: #f8fafc;
+      }
+
+      .candidate-name small {
+        color: #dbeafe;
+        font-weight: 700;
+      }
+
+      .leader-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(251, 191, 36, 0.15);
+        color: #fde68a;
+        border: 1px solid rgba(251, 191, 36, 0.4);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0;
+        transform: translateY(-4px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .leader-badge.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .progress-track {
+        position: relative;
+        height: 14px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.12);
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 0;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--primary), var(--emerald));
+        box-shadow: 0 0 18px rgba(16, 185, 129, 0.22);
+        transition: width 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .result-row.leading .progress-fill {
+        background: linear-gradient(90deg, #fbbf24, #f59e0b, #fcd34d);
+        box-shadow: 0 0 22px rgba(251, 191, 36, 0.18);
+      }
+
+      .result-row-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 10px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .vote-count {
+        color: var(--text);
+        font-weight: 800;
+      }
+
+      .leaderboard-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .leaderboard-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        background: rgba(15, 23, 42, 0.38);
+      }
+
+      .leaderboard-rank {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: rgba(79, 70, 229, 0.18);
+        font-weight: 800;
+      }
+
+      .leaderboard-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+      }
+
+      .leaderboard-score {
+        font-weight: 800;
+      }
+
+      @media (max-width: 700px) {
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span id="eyebrow" class="eyebrow">Live Dashboard</span>
+          <h1 id="pageTitle">Rampura Election Results</h1>
+        </div>
+        <div class="header-controls">
+          <a href="https://t.me/GramPanchayatRampura" target="_blank" rel="noopener noreferrer" class="lang-toggle telegram-link" type="button">Telegram</a>
+          <button id="langToggle" class="lang-toggle" type="button">हिंदी</button>
+          <div id="modeBadge" class="status-pill">Online Sync</div>
+        </div>
+      </header>
+
+      <section class="summary-grid">
+        <div class="metric-card">
+          <span id="totalVotesLabel" class="metric-label">Total Votes</span>
+          <div id="totalVotes" class="metric-value">0</div>
+          <div id="totalVotesNote" class="metric-subtitle">Across all valid cast ballots</div>
+        </div>
+
+        <div class="metric-card">
+          <span id="leaderLabel" class="metric-label">Current Leader</span>
+          <div id="leaderName" class="metric-value">—</div>
+          <div id="leaderStatus" class="metric-subtitle">Awaiting vote tally</div>
+        </div>
+
+        <div class="metric-card">
+          <span id="turnoutLabel" class="metric-label">Turnout</span>
+          <div id="turnoutValue" class="metric-value">0%</div>
+          <div id="turnoutNote" class="metric-subtitle">Live participation rate</div>
+        </div>
+      </section>
+
+      <section class="panel-card">
+        <h2 id="voteShareTitle" class="panel-title">Candidate Vote Share</h2>
+        <div id="resultList" class="result-list"></div>
+      </section>
+
+      <section class="panel-card" style="margin-top: 18px;">
+        <h2 id="leaderboardTitle" class="panel-title">Live Leaderboard</h2>
+        <div id="leaderboardList" class="leaderboard-list"></div>
+      </section>
+    </div>
+    <footer class="site-credit">Created by Krishan Kumawat</footer>
+
+    <script>
+      const GLOBAL_SETTINGS = {
+        villageName: "Rampura",
+        firebaseUrl: "https://panchayat-voting-default-rtdb.firebaseio.com/",
+        candidates: [
+          { id: "1", name: { en: "Candidate 1", hi: "उम्मीदवार 1" }, fullName: { en: "Ramesh Kumar", hi: "रामेश कुमार" } },
+          { id: "2", name: { en: "Candidate 2", hi: "उम्मीदवार 2" }, fullName: { en: "Suresh Singh", hi: "सुरेश सिंह" } },
+          { id: "3", name: { en: "Candidate 3", hi: "उम्मीदवार 3" }, fullName: { en: "Rajesh Jakhar", hi: "राजेश जाखड़" } },
+          { id: "4", name: { en: "Candidate 4", hi: "उम्मीदवार 4" }, fullName: { en: "Vikas Nehra", hi: "विकास नेहरा" } },
+          { id: "5", name: { en: "Candidate 5", hi: "उम्मीदवार 5" }, fullName: { en: "Mahendra Mile", hi: "महेन्द्र मील" } },
+          { id: "6", name: { en: "NOTA", hi: "नोटा" }, fullName: { en: "None of the Above", hi: "उपरोक्त में से कोई नहीं" } }
+        ]
+      };
+
+      const translations = {
+        en: {
+          ear: "Live Dashboard",
+          title: "Rampura Election Results",
+          online: "Online Sync",
+          offline: "Offline Mode",
+          voteTotal: "Total Votes",
+          voteNote: "Across all valid cast ballots",
+          leader: "Current Leader",
+          leaderAwait: "Awaiting vote tally",
+          turnout: "Turnout",
+          turnoutNote: "Live participation rate",
+          voteShare: "Candidate Vote Share",
+          leaderboard: "Live Leaderboard",
+          leading: "👑 Leading",
+          tie: "Tie",
+          tieText: "Two or more candidates are tied",
+          votes: "votes",
+          langToggle: "हिंदी"
+        },
+        hi: {
+          ear: "लाइव डैशबोर्ड",
+          title: "रामपुरा चुनाव परिणाम",
+          online: "ऑनलाइन सिंक",
+          offline: "ऑफलाइन मोड",
+          voteTotal: "कुल वोट",
+          voteNote: "सभी वैध मतों की कुल संख्या",
+          leader: "वर्तमान नेता",
+          leaderAwait: "मतगणना की प्रतीक्षा",
+          turnout: "उपस्थिति",
+          turnoutNote: "लाइव भागीदारी दर",
+          voteShare: "उम्मीदवार वोट शेयर",
+          leaderboard: "लाइव लीडरबोर्ड",
+          leading: "👑 अग्रणी",
+          tie: "बराबरी",
+          tieText: "दो या अधिक उम्मीदवार बराबरी पर हैं",
+          votes: "वोट",
+          langToggle: "English"
+        }
+      };
+
+      const STORAGE_KEY = "panchayat_offline_votes";
+      const modeBadge = document.getElementById("modeBadge");
+      const totalVotesNode = document.getElementById("totalVotes");
+      const leaderNameNode = document.getElementById("leaderName");
+      const leaderStatusNode = document.getElementById("leaderStatus");
+      const turnoutValueNode = document.getElementById("turnoutValue");
+      const resultList = document.getElementById("resultList");
+      const leaderboardList = document.getElementById("leaderboardList");
+      const eyebrow = document.getElementById("eyebrow");
+      const pageTitle = document.getElementById("pageTitle");
+      const langToggle = document.getElementById("langToggle");
+      const totalVotesLabel = document.getElementById("totalVotesLabel");
+      const totalVotesNote = document.getElementById("totalVotesNote");
+      const leaderLabel = document.getElementById("leaderLabel");
+      const turnoutLabel = document.getElementById("turnoutLabel");
+      const turnoutNote = document.getElementById("turnoutNote");
+      const voteShareTitle = document.getElementById("voteShareTitle");
+      const leaderboardTitle = document.getElementById("leaderboardTitle");
+
+      let currentLang = localStorage.getItem("panchayat_lang") || "en";
+
+      function detectMode() {
+        return window.location.protocol === "file:" ? "offline" : "online";
+      }
+
+      function updateModeBadge() {
+        const mode = detectMode();
+        const isOffline = mode === "offline";
+        modeBadge.textContent = isOffline ? translations[currentLang].offline : translations[currentLang].online;
+        modeBadge.classList.toggle("offline", isOffline);
+      }
+
+      function applyLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem("panchayat_lang", lang);
+        const t = translations[lang];
+        eyebrow.textContent = t.ear;
+        pageTitle.textContent = t.title;
+        totalVotesLabel.textContent = t.voteTotal;
+        totalVotesNote.textContent = t.voteNote;
+        leaderLabel.textContent = t.leader;
+        leaderStatusNode.textContent = t.leaderAwait;
+        turnoutLabel.textContent = t.turnout;
+        turnoutNote.textContent = t.turnoutNote;
+        voteShareTitle.textContent = t.voteShare;
+        leaderboardTitle.textContent = t.leaderboard;
+        langToggle.textContent = t.langToggle;
+        updateModeBadge();
+      }
+
+      async function fetchRemoteVotes() {
+        try {
+          const response = await fetch(`${GLOBAL_SETTINGS.firebaseUrl}votes.json`);
+          if (!response.ok) {
+            throw new Error("Firebase unavailable");
+          }
+          const data = await response.json();
+          return data || {};
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function getLocalVotes() {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function sanitizeVotes(votesObject) {
+        if (!votesObject || typeof votesObject !== "object") return [];
+        return Object.keys(votesObject)
+          .map((key) => ({ ...votesObject[key], mobileNumber: votesObject[key]?.mobileNumber || key }))
+          .filter((vote) => vote && (vote.selectedCandidate || vote.candidateId));
+      }
+
+      async function getVoteData() {
+        if (detectMode() === "offline") {
+          return sanitizeVotes(getLocalVotes());
+        }
+
+        const remote = await fetchRemoteVotes();
+        const local = getLocalVotes();
+        return sanitizeVotes({ ...local, ...remote });
+      }
+
+      function createCounts(votes) {
+        const counts = {};
+        GLOBAL_SETTINGS.candidates.forEach((candidate) => {
+          counts[candidate.id] = 0;
+        });
+
+        votes.forEach((vote) => {
+          const candidateId = String(vote.selectedCandidate || vote.candidateId || "");
+          if (counts[candidateId] !== undefined) {
+            counts[candidateId] += 1;
+          }
+        });
+
+        return counts;
+      }
+
+      function rollNumber(element, targetValue, suffix = "") {
+        const startValue = 0;
+        const duration = 900;
+        const startTime = performance.now();
+
+        function step(now) {
+          const progress = Math.min((now - startTime) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const current = Math.round(startValue + (targetValue - startValue) * eased);
+          element.textContent = `${current}${suffix}`;
+          if (progress < 1) {
+            requestAnimationFrame(step);
+          } else {
+            element.textContent = `${targetValue}${suffix}`;
+          }
+        }
+
+        requestAnimationFrame(step);
+      }
+
+      function computeLeader(counts) {
+        const entries = GLOBAL_SETTINGS.candidates.map((candidate) => ({
+          ...candidate,
+          count: counts[candidate.id] || 0
+        }));
+
+        const sorted = [...entries].sort((a, b) => b.count - a.count);
+        const highest = sorted[0]?.count || 0;
+        const leaders = sorted.filter((candidate) => candidate.count === highest && highest > 0);
+
+        return {
+          highest,
+          leaders,
+          list: sorted
+        };
+      }
+
+      function setLeader(result) {
+        const leader = result.leaders.length > 1 ? null : result.leaders[0];
+
+        if (!leader) {
+          leaderNameNode.textContent = translations[currentLang].tie;
+          leaderStatusNode.textContent = translations[currentLang].tieText;
+          return;
+        }
+
+        leaderNameNode.textContent = leader.fullName[currentLang];
+        leaderStatusNode.textContent = `${leader.name[currentLang]} ${currentLang === "hi" ? "अग्रणी हैं" : "is leading with"} ${leader.count} ${translations[currentLang].votes}`;
+      }
+
+      function renderRows(counts) {
+        const totalVotes = Object.values(counts).reduce((sum, value) => sum + value, 0);
+        const data = GLOBAL_SETTINGS.candidates.map((candidate) => ({
+          ...candidate,
+          count: counts[candidate.id] || 0
+        }));
+
+        const leaderInfo = computeLeader(counts);
+        const leaderList = leaderInfo.list;
+        const topCandidate = leaderList[0];
+
+        resultList.innerHTML = data.map((candidate) => {
+          const percent = totalVotes > 0 ? (candidate.count / totalVotes) * 100 : 0;
+          const isLeading = candidate.id === (leaderInfo.leaders.length === 1 ? leaderInfo.leaders[0].id : "");
+          const badge = isLeading ? `<span class="leader-badge visible">${translations[currentLang].leading}</span>` : '<span class="leader-badge">—</span>';
+          return `
+            <div class="result-row ${isLeading ? "leading" : ""}">
+              <div class="result-row-header">
+                <div class="candidate-meta">
+                  <div class="candidate-box">${candidate.id}</div>
+                  <div class="candidate-name">
+                    <strong>${candidate.name[currentLang]}</strong>
+                    <small>${candidate.fullName[currentLang]}</small>
+                  </div>
+                </div>
+                ${badge}
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" style="width:${percent}%"></div>
+              </div>
+              <div class="result-row-bottom">
+                <span class="vote-count" data-target="${candidate.count}">${candidate.count}</span>
+                <span data-percent="${percent.toFixed(1)}">${percent.toFixed(1)}%</span>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        const voteCountNodes = document.querySelectorAll(".vote-count");
+        voteCountNodes.forEach((node) => {
+          const value = Number(node.dataset.target || 0);
+          node.textContent = "0";
+          rollNumber(node, value);
+        });
+
+        const percentNodes = document.querySelectorAll("[data-percent]");
+        percentNodes.forEach((node) => {
+          const value = Number(node.dataset.percent || 0);
+          node.textContent = "0.0%";
+          rollNumber(node, value, "%");
+        });
+
+        const progressBars = document.querySelectorAll(".progress-fill");
+        progressBars.forEach((bar) => {
+          const width = bar.style.width;
+          bar.style.width = "0%";
+          requestAnimationFrame(() => {
+            bar.style.width = width;
+          });
+        });
+
+        const leaderListData = leaderInfo.list.slice(0, 5);
+        leaderboardList.innerHTML = leaderListData.map((candidate, index) => `
+          <div class="leaderboard-item">
+            <div class="leaderboard-meta">
+              <span class="leaderboard-rank">${index + 1}</span>
+              <span>${candidate.fullName[currentLang]}</span>
+            </div>
+            <span class="leaderboard-score">${candidate.count} ${translations[currentLang].votes}</span>
+          </div>
+        `).join("");
+
+        return { totalVotes, topCandidate };
+      }
+
+      function renderTurnout(totalVotes) {
+        const turnout = totalVotes > 0 ? Math.min((totalVotes / 5000) * 100, 100) : 0;
+        rollNumber(turnoutValueNode, Number(turnout.toFixed(1)), "%");
+      }
+
+      async function refreshDashboard() {
+        const votes = await getVoteData();
+        const counts = createCounts(votes);
+        const totalVotes = Object.values(counts).reduce((sum, value) => sum + value, 0);
+        const leaderInfo = computeLeader(counts);
+
+        rollNumber(totalVotesNode, totalVotes);
+        setLeader(leaderInfo);
+        renderRows(counts);
+        renderTurnout(totalVotes);
+      }
+
+      langToggle.addEventListener("click", () => {
+        const nextLang = currentLang === "en" ? "hi" : "en";
+        applyLanguage(nextLang);
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        applyLanguage(currentLang);
+        refreshDashboard();
+        setInterval(refreshDashboard, 2500);
+      });
+    </script>
+  </body>
+</html>
