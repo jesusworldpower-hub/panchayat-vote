@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pura Chhoti Voting Terminal</title>
+    <style>
+      :root {
+        --bg-1: #0f172a;
+        --bg-2: #111827;
+        --panel: rgba(15, 23, 42, 0.72);
+        --glass: rgba(15, 23, 42, 0.56);
+        --line: rgba(148, 163, 184, 0.2);
+        --text: #e2e8f0;
+        --muted: #a5b4cf;
+        --primary: #4f46e5;
+        --primary-2: #8b5cf6;
+        --green: #10b981;
+        --green-soft: rgba(16, 185, 129, 0.2);
+        --amber: #fbbf24;
+        --danger: #ef4444;
+        --shadow: 0 15px 35px rgba(15, 23, 42, 0.45);
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(17, 24, 39, 0.96));
+        color: var(--text);
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        position: relative;
+        overflow-x: hidden;
+        background-image:
+          linear-gradient(rgba(2, 8, 23, 0.42), rgba(15, 23, 42, 0.68)),
+          url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1600&q=80');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+      }
+
+      @keyframes fadePage {
+        0% { opacity: 0; transform: scale(0.985); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+
+      @keyframes riseIn {
+        0% {
+          opacity: 0;
+          transform: translateY(22px) scale(0.98);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @keyframes floatCard {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+      }
+
+      @keyframes glowPulse {
+        0%, 100% { box-shadow: 0 0 0 rgba(79, 70, 229, 0.15); }
+        50% { box-shadow: 0 0 22px rgba(79, 70, 229, 0.2); }
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+          linear-gradient(rgba(79, 70, 229, 0.14), rgba(16, 185, 129, 0.1)),
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: auto, 22px 22px, 22px 22px;
+        mask-image: radial-gradient(circle at center, black 35%, transparent 100%);
+        pointer-events: none;
+      }
+
+      .app-shell {
+        width: min(1100px, 100%);
+      }
+
+      .site-credit {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+        color: rgba(226, 232, 240, 0.78);
+        font-size: 0.78rem;
+        text-align: center;
+      }
+
+      .page-nav {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .page-nav a {
+        padding: 8px 12px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.52);
+        color: var(--text);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .voting-panel {
+        background: rgba(15, 23, 42, 0.64);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-shell {
+        margin: auto 0;
+      }
+
+      .voting-panel::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top right, rgba(79, 70, 229, 0.22), transparent 35%);
+        pointer-events: none;
+      }
+
+      .panel-header {
+        position: relative;
+        padding: 26px 24px 18px;
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.18), rgba(16, 185, 129, 0.12));
+        border-bottom: 1px solid var(--line);
+      }
+
+      .panel-header::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+        transform: translateX(-100%);
+        animation: shimmer 6s linear infinite;
+      }
+
+      @keyframes shimmer {
+        0% { transform: translateX(-120%); }
+        100% { transform: translateX(120%); }
+      }
+
+      .header-row {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .brand-block {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .village-badge {
+        display: inline-flex;
+        width: fit-content;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: rgba(79, 70, 229, 0.18);
+        border: 1px solid rgba(79, 70, 229, 0.38);
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #c7d2fe;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 2vw + 1rem, 3rem);
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: rgba(16, 185, 129, 0.12);
+        border: 1px solid rgba(16, 185, 129, 0.28);
+        color: #b3fdeb;
+      }
+
+      .status-pill.offline {
+        background: rgba(251, 191, 36, 0.12);
+        border-color: rgba(251, 191, 36, 0.28);
+        color: #fde68a;
+      }
+
+      .status-pill.online {
+        background: rgba(16, 185, 129, 0.12);
+        border-color: rgba(16, 185, 129, 0.28);
+        color: #bbf7d0;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .lang-toggle {
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: rgba(15, 23, 42, 0.52);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 9px 12px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .telegram-link {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(59, 130, 246, 0.15));
+        border-color: rgba(96, 165, 250, 0.35);
+      }
+
+      .panel-body {
+        padding: 24px;
+      }
+
+      .warning-banner {
+        display: none;
+        margin-bottom: 18px;
+        padding: 15px 16px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(127, 29, 29, 0.3));
+        border: 1px solid rgba(239, 68, 68, 0.45);
+        color: #fecaca;
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: 0.04em;
+      }
+
+      .warning-banner.visible {
+        display: block;
+        animation: riseIn 0.45s ease;
+      }
+
+      .field-group {
+        animation: riseIn 0.6s ease both;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      .field-group {
+        display: grid;
+        gap: 10px;
+      }
+
+      label {
+        font-weight: 700;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      input[type="text"], input[type="tel"] {
+        width: 100%;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(15, 23, 42, 0.66);
+        color: var(--text);
+        border-radius: 14px;
+        padding: 15px 16px;
+        font-size: 1rem;
+        outline: none;
+        transition: border 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      }
+
+      input::placeholder {
+        color: rgba(148, 163, 184, 0.8);
+      }
+
+      input:focus {
+        border-color: rgba(79, 70, 229, 0.7);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+      }
+
+      .candidate-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 10px;
+      }
+
+      .candidate-option {
+        position: relative;
+      }
+
+      .candidate-option:hover .candidate-label {
+        transform: translateY(-2px);
+      }
+
+      .candidate-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .candidate-label {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-height: 86px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        background: rgba(15, 23, 42, 0.62);
+        transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .candidate-option input:checked + .candidate-label {
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.25), rgba(16, 185, 129, 0.12));
+        border-color: rgba(16, 185, 129, 0.72);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12), 0 18px 30px rgba(16, 185, 129, 0.12);
+        transform: translateY(-2px);
+      }
+
+      .candidate-label:hover {
+        transform: translateY(-2px) scale(1.01);
+        border-color: rgba(79, 70, 229, 0.52);
+        box-shadow: 0 16px 22px rgba(79, 70, 229, 0.12);
+      }
+
+      .radio-mark {
+        position: relative;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid rgba(148, 163, 184, 0.8);
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+      }
+
+      .candidate-option input:checked + .candidate-label .radio-mark {
+        border-color: rgba(16, 185, 129, 1);
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+      }
+
+      .candidate-option input:checked + .candidate-label .radio-mark::after {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981, #34d399);
+      }
+
+      .candidate-name {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .candidate-name strong {
+        font-size: 0.96rem;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: #f8fafc;
+        text-shadow: 0 1px 0 rgba(15, 23, 42, 0.65);
+      }
+
+      .candidate-name span {
+        font-size: 0.74rem;
+        color: #cbd5e1;
+        font-weight: 700;
+      }
+
+      .submit-wrap {
+        display: flex;
+        justify-content: center;
+        padding-top: 6px;
+      }
+
+      button[type="submit"] {
+        appearance: none;
+        border: none;
+        cursor: pointer;
+        width: min(100%, 380px);
+        padding: 16px 22px;
+        border-radius: 16px;
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: white;
+        background: linear-gradient(135deg, var(--primary), var(--green));
+        box-shadow: 0 14px 28px rgba(79, 70, 229, 0.35);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      button[type="submit"]:hover {
+        transform: translateY(-2px) scale(1.01);
+        box-shadow: 0 18px 32px rgba(16, 185, 129, 0.28);
+      }
+
+      .lang-toggle:hover,
+      .status-pill:hover {
+        transform: translateY(-1px);
+        transition: transform 0.2s ease;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 768px) {
+        .panel-body {
+          padding: 18px 16px 20px;
+        }
+
+        .header-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .candidate-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="voting-panel">
+        <header class="panel-header">
+          <div class="header-row">
+            <div class="brand-block">
+              <span id="villageBadge" class="village-badge">Gram Panchayat Election</span>
+              <h1 id="villageName">पूरा छोटी</h1>
+            </div>
+            <div class="header-actions">
+              <button id="langToggle" class="lang-toggle" type="button">हिंदी</button>
+              <div id="modeBadge" class="status-pill online">Online Sync</div>
+            </div>
+          </div>
+        </header>
+
+        <div class="panel-body">
+          <div id="warningBanner" class="warning-banner">
+            This device has already submitted a vote. Voting access is locked.
+          </div>
+
+          <form id="voteForm" novalidate>
+            <div class="form-grid">
+              <div class="field-group">
+                <label id="voterNameLabel" for="voterName">Voter Full Name</label>
+                <input id="voterName" name="voterName" type="text" placeholder="Enter your full name" required />
+              </div>
+
+              <div class="field-group">
+                <label id="mobileNumberLabel" for="mobileNumber">10-Digit Mobile Number</label>
+                <input id="mobileNumber" name="mobileNumber" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="Enter 10-digit mobile number" required />
+              </div>
+
+              <div class="field-group">
+                <label id="chooseCandidateLabel">आपके हिसाब से पूरा छोटी ग्राम पंचायत का अगला सरपंच कौन होना चाहिए? अपनी राय जरूर रखें!</label>
+                <div id="candidateGrid" class="candidate-grid" aria-label="Candidate options"></div>
+              </div>
+
+              <div class="submit-wrap">
+                <button id="submitVoteButton" type="submit">Submit Vote</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <footer class="site-credit">
+      <nav class="page-nav" aria-label="Page navigation">
+        <a id="navVote" href="index.html">Vote</a>
+        <a id="navResults" href="results.html">Results</a>
+        <a id="navAdmin" href="admin.html">Admin</a>
+      </nav>
+      <span>Created by Krishan Kumawat</span>
+    </footer>
+
+    <script>
+      const GLOBAL_SETTINGS = {
+        villageName: "पूरा छोटी",
+        masterAdminPassword: "Krishan@2005KK",
+        firebaseUrl: "https://panchayat-voting-default-rtdb.firebaseio.com/",
+        candidates: [
+          { id: "1", name: { en: "Chhoti Devi / Gopal Thekedar", hi: "छोटी देवी / गोपाल ठेकेदार" } },
+          { id: "2", name: { en: "Raju Bijarniya", hi: "राजू बिजारणियां" } },
+          { id: "3", name: { en: "Sumitra Devi / Kamal Sain", hi: "सुमित्रा देवी / कमल सैन" } },
+          { id: "4", name: { en: "Kalpana / Manish Jakhar", hi: "कल्पना / मनीष जाखड़" } },
+          { id: "5", name: { en: "Vasudev Kawiya", hi: "वासुदेव कविया" } },
+          { id: "6", name: { en: "Other", hi: "अन्य कोई" } }
+        ]
+      };
+
+      const translations = {
+        en: {
+          pageTitle: "Pura Chhoti Voting Terminal",
+          villageName: "Pura Chhoti",
+          badge: "Pura Chhoti Gram Panchayat Election",
+          online: "Online Sync",
+          offline: "Offline Mode",
+          warning: "This device has already submitted a vote. Voting access is locked.",
+          labelName: "Voter Full Name",
+          placeholderName: "Enter your full name",
+          labelMobile: "10-Digit Mobile Number",
+          placeholderMobile: "Enter 10-digit mobile number",
+          labelCandidate: "आपके हिसाब से पूरा छोटी ग्राम पंचायत का अगला सरपंच कौन होना चाहिए? अपनी राय जरूर रखें!",
+          submit: "Submit Vote",
+          alertName: "Please enter your full name.",
+          alertMobile: "Mobile number must contain exactly 10 digits.",
+          alertCandidate: "Please select a candidate.",
+          alertDuplicate: "This mobile number has already voted. Duplicate submission is blocked.",
+          alertSuccess: "Thank You, {name}! Your vote has been submitted successfully to the cloud.",
+          alertOffline: "Vote stored locally because cloud syncing failed. The vote has been saved for offline continuity.",
+          statusLocked: "This device has already submitted a vote. Voting access is locked.",
+          navVote: "Vote",
+          navResults: "Results",
+          navAdmin: "Admin",
+          langToggle: "हिंदी"
+        },
+        hi: {
+          pageTitle: "पूरा छोटी वोटिंग केंद्र",
+          villageName: "पूरा छोटी",
+          badge: "पूरा छोटी ग्राम पंचायत चुनाव",
+          online: "ऑनलाइन सिंक",
+          offline: "ऑफलाइन मोड",
+          warning: "यह डिवाइस पहले ही वोट दे चुका है। वोटिंग एक्सेस लॉक है।",
+          labelName: "मतदाता का पूरा नाम",
+          placeholderName: "अपना पूरा नाम लिखें",
+          labelMobile: "10-अंकीय मोबाइल नंबर",
+          placeholderMobile: "10-अंकीय मोबाइल नंबर भरें",
+          labelCandidate: "आपके हिसाब से पूरा छोटी ग्राम पंचायत का अगला सरपंच कौन होना चाहिए? अपनी राय जरूर रखें!",
+          submit: "वोट जमा करें",
+          alertName: "कृपया अपना पूरा नाम दर्ज करें।",
+          alertMobile: "मोबाइल नंबर में ठीक 10 अंक होने चाहिए।",
+          alertCandidate: "कृपया एक उम्मीदवार चुनें।",
+          alertDuplicate: "यह मोबाइल नंबर पहले ही वोट दे चुका है। डुप्लिकेट सबमिशन ब्लॉक है।",
+          alertSuccess: "धन्यवाद, {name}! आपका वोट सफलतापूर्वक云 में जमा हो गया है।",
+          alertOffline: "क्लाउड सिंक में समस्या होने के कारण वोट लोकल में सेव हो गया है।",
+          statusLocked: "यह डिवाइस पहले ही वोट दे चुका है। वोटिंग एक्सेस लॉक है।",
+          navVote: "वोटिंग",
+          navResults: "परिणाम",
+          navAdmin: "एडमिन",
+          langToggle: "English"
+        }
+      };
+
+      const STORAGE_KEYS = {
+        deviceLocked: "device_locked",
+        offlineVotes: "panchayat_offline_votes"
+      };
+
+      const form = document.getElementById("voteForm");
+      const modeBadge = document.getElementById("modeBadge");
+      const warningBanner = document.getElementById("warningBanner");
+      const candidateGrid = document.getElementById("candidateGrid");
+      const langToggle = document.getElementById("langToggle");
+      const villageBadge = document.getElementById("villageBadge");
+      const voterNameLabel = document.getElementById("voterNameLabel");
+      const mobileNumberLabel = document.getElementById("mobileNumberLabel");
+      const chooseCandidateLabel = document.getElementById("chooseCandidateLabel");
+      const submitVoteButton = document.getElementById("submitVoteButton");
+      const voterNameInput = document.getElementById("voterName");
+      const mobileNumberInput = document.getElementById("mobileNumber");
+
+      let currentLang = localStorage.getItem("panchayat_lang") || "en";
+
+      function detectMode() {
+        return window.location.protocol === "file:" ? "offline" : "online";
+      }
+
+      function updateModeBadge() {
+        const mode = detectMode();
+        const text = mode === "offline" ? translations[currentLang].offline : translations[currentLang].online;
+        modeBadge.textContent = text;
+        modeBadge.classList.toggle("offline", mode === "offline");
+        modeBadge.classList.toggle("online", mode !== "offline");
+      }
+
+      function applyLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem("panchayat_lang", lang);
+        const t = translations[lang];
+
+        document.title = t.pageTitle;
+        villageBadge.textContent = t.badge;
+        document.getElementById("villageName").textContent = t.villageName;
+        voterNameLabel.textContent = t.labelName;
+        voterNameInput.placeholder = t.placeholderName;
+        mobileNumberLabel.textContent = t.labelMobile;
+        mobileNumberInput.placeholder = t.placeholderMobile;
+        chooseCandidateLabel.textContent = t.labelCandidate;
+        submitVoteButton.textContent = t.submit;
+        warningBanner.textContent = t.warning;
+        langToggle.textContent = t.langToggle;
+        document.getElementById("navVote").textContent = t.navVote;
+        document.getElementById("navResults").textContent = t.navResults;
+        document.getElementById("navAdmin").textContent = t.navAdmin;
+        renderCandidates();
+        updateModeBadge();
+      }
+
+      function getLocalVotes() {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEYS.offlineVotes) || "{}");
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function saveLocalVotes(votes) {
+        localStorage.setItem(STORAGE_KEYS.offlineVotes, JSON.stringify(votes));
+      }
+
+      function renderCandidates() {
+        candidateGrid.innerHTML = GLOBAL_SETTINGS.candidates.map((candidate) => `
+          <div class="candidate-option">
+            <input id="candidate-${candidate.id}" type="radio" name="selectedCandidate" value="${candidate.id}" required />
+            <label class="candidate-label" for="candidate-${candidate.id}">
+              <span class="radio-mark" aria-hidden="true"></span>
+              <span class="candidate-name">
+                <strong>${candidate.name[currentLang]}</strong>
+              </span>
+            </label>
+          </div>
+        `).join("");
+      }
+
+      function hasDeviceLock() {
+        return localStorage.getItem(STORAGE_KEYS.deviceLocked) === "true";
+      }
+
+      function lockDevice() {
+        localStorage.setItem(STORAGE_KEYS.deviceLocked, "true");
+      }
+
+      async function fetchRemoteVotes() {
+        try {
+          const response = await fetch(`${GLOBAL_SETTINGS.firebaseUrl}votes.json`, { method: "GET" });
+          if (!response.ok) {
+            throw new Error("Unable to reach cloud database");
+          }
+          const data = await response.json();
+          return data || {};
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function getVoteStore() {
+        if (detectMode() === "offline") {
+          return getLocalVotes();
+        }
+        return fetchRemoteVotes();
+      }
+
+      async function mobileAlreadyVoted(mobile) {
+        const mobileKey = String(mobile).trim();
+
+        if (hasDeviceLock()) {
+          return true;
+        }
+
+        if (detectMode() === "offline") {
+          const localVotes = getLocalVotes();
+          return Boolean(localVotes[mobileKey]);
+        }
+
+        const remoteVotes = await fetchRemoteVotes();
+        const localVotes = getLocalVotes();
+        return Boolean(remoteVotes[mobileKey] || localVotes[mobileKey]);
+      }
+
+      async function saveVoteRecord(voteRecord) {
+        const mobileKey = String(voteRecord.mobileNumber).trim();
+
+        if (detectMode() === "offline") {
+          const localVotes = getLocalVotes();
+          localVotes[mobileKey] = voteRecord;
+          saveLocalVotes(localVotes);
+          return true;
+        }
+
+        try {
+          const response = await fetch(`${GLOBAL_SETTINGS.firebaseUrl}votes/${encodeURIComponent(mobileKey)}.json`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(voteRecord)
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to sync vote to cloud");
+          }
+
+          return true;
+        } catch (error) {
+          const localVotes = getLocalVotes();
+          localVotes[mobileKey] = voteRecord;
+          saveLocalVotes(localVotes);
+          return false;
+        }
+      }
+
+      function validateForm(name, mobileNumber, selectedCandidate) {
+        const cleanName = name.trim();
+        const cleanMobile = mobileNumber.trim();
+        const t = translations[currentLang];
+
+        if (!cleanName || cleanName.length < 2) {
+          alert(t.alertName);
+          return false;
+        }
+
+        if (!/^\d{10}$/.test(cleanMobile)) {
+          alert(t.alertMobile);
+          return false;
+        }
+
+        if (!selectedCandidate) {
+          alert(t.alertCandidate);
+          return false;
+        }
+
+        return { cleanName, cleanMobile, selectedCandidate };
+      }
+
+      function handleLockedState() {
+        const isLocked = hasDeviceLock();
+        const formElements = form.querySelectorAll("input, button");
+
+        if (isLocked) {
+          form.classList.add("hidden");
+          warningBanner.classList.add("visible");
+          formElements.forEach((element) => {
+            element.disabled = true;
+          });
+        } else {
+          form.classList.remove("hidden");
+          warningBanner.classList.remove("visible");
+          formElements.forEach((element) => {
+            if (element.tagName !== "BUTTON" || element.type !== "submit") {
+              element.disabled = false;
+            }
+          });
+        }
+      }
+
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        if (hasDeviceLock()) {
+          handleLockedState();
+          return;
+        }
+
+        const voterName = document.getElementById("voterName").value;
+        const mobileNumber = document.getElementById("mobileNumber").value;
+        const selectedCandidate = document.querySelector('input[name="selectedCandidate"]:checked')?.value || "";
+        const validation = validateForm(voterName, mobileNumber, selectedCandidate);
+
+        if (!validation) {
+          return;
+        }
+
+        const duplicateCheck = await mobileAlreadyVoted(validation.cleanMobile);
+        if (duplicateCheck) {
+          alert(translations[currentLang].alertDuplicate);
+          lockDevice();
+          handleLockedState();
+          return;
+        }
+
+        const voteRecord = {
+          voterName: validation.cleanName,
+          mobileNumber: validation.cleanMobile,
+          selectedCandidate: validation.selectedCandidate,
+          timestamp: new Date().toISOString()
+        };
+
+        const saved = await saveVoteRecord(voteRecord);
+        lockDevice();
+        handleLockedState();
+
+        if (saved) {
+          alert(translations[currentLang].alertSuccess.replace("{name}", validation.cleanName));
+          setTimeout(() => {
+            window.location.href = "results.html";
+          }, 700);
+        } else {
+          alert(translations[currentLang].alertOffline);
+          setTimeout(() => {
+            window.location.href = "results.html";
+          }, 700);
+        }
+      });
+
+      langToggle.addEventListener("click", () => {
+        const nextLang = currentLang === "en" ? "hi" : "en";
+        applyLanguage(nextLang);
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        applyLanguage(currentLang);
+        handleLockedState();
+      });
+    </script>
+  </body>
+</html>
